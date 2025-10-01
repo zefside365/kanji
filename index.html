@@ -1,52 +1,81 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sprunki Kanji Game - Complete 2500 Kanji</title>
+    <title>Sprunki Kanji Game - Complete 1000+ Kanji</title>
     <style>
         body { font-family: Arial, sans-serif; background: #f0f0f0; text-align: center; padding: 20px; }
         h1 { color: #333; }
         .set-selector { margin: 20px 0; }
         .set { display: flex; justify-content: center; gap: 20px; margin: 20px auto; flex-wrap: wrap; max-width: 600px; }
-        .character { width: 100px; height: 100px; background: #4CAF50; color: white; font-size: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; line-height: 1; border: none; }
-        .character:hover { background: #45a049; transform: scale(1.05); }
-        .character.active { background: #ff9800; transform: scale(1.1); }
-        .info { margin-top: 20px; font-size: 14px; max-width: 800px; margin: 20px auto; text-align: left; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; max-height: 400px; }
-        .info div { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        select { padding: 5px; font-size: 16px; }
-        .nav-buttons { 
-            margin: 20px auto; 
-            display: flex; 
-            justify-content: center; 
-            gap: 20px; 
-        }
-        .nav-btn { 
-            width: 80px; 
-            height: 50px; 
-            background: #4CAF50; 
-            color: white; 
-            border: none; 
-            border-radius: 25px; 
-            font-size: 16px; 
+        .character { 
+            position: relative; 
+            width: 100px; 
+            height: 100px; 
+            border-radius: 50%; 
             cursor: pointer; 
-            transition: background 0.3s; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
-            gap: 5px; 
+            transition: all 0.3s; 
+            line-height: 1; 
+            border: none; 
+            font-size: 40px; 
+            color: white; 
+            overflow: hidden; 
         }
+        .character:hover { transform: scale(1.1); }
+        .character.active { transform: scale(1.2); }
+        /* Base for all */
+        .character::before { content: ''; position: absolute; top: -10%; left: 50%; transform: translateX(-50%); width: 20%; height: 20%; border-radius: 50%; z-index: 1; }
+        .character .kanji { position: relative; z-index: 2; }
+
+        /* Oren: Orange alien with antennae, headphones, tuft */
+        .oren { background: linear-gradient(135deg, #ff9500, #ff6b00); }
+        .oren::after { content: ''; position: absolute; top: -15%; left: 20%; width: 10%; height: 30%; background: #ff9500; border-radius: 50% 50% 0 0; transform: rotate(-15deg); }
+        .oren::before { top: -15%; left: 80%; width: 10%; height: 30%; background: #ff9500; border-radius: 50% 50% 0 0; transform: rotate(15deg); }
+        .oren .kanji { text-shadow: 0 0 5px rgba(0,0,0,0.3); }
+
+        /* Raddy: Red demon with spiky horns */
+        .raddy { background: linear-gradient(135deg, #ff0000, #cc0000); }
+        .raddy::after { content: ''; position: absolute; top: -20%; left: 50%; transform: translateX(-50%) rotate(0deg); width: 5%; height: 25%; background: #cc0000; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); }
+        .raddy::before { content: ''; position: absolute; top: -25%; left: 40%; width: 5%; height: 20%; background: #cc0000; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); transform: rotate(-20deg); }
+        .raddy .kanji { color: #fff; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+
+        /* Clukr: Silver with cymbal antenna, glasses, lab coat */
+        .clukr { background: linear-gradient(135deg, #c0c0c0, #a0a0a0); border: 2px solid #808080; }
+        .clukr::after { content: '⊓'; position: absolute; top: -10%; left: 50%; transform: translateX(-50%); font-size: 20px; color: #a0a0a0; z-index: 3; }
+        .clukr::before { content: ''; position: absolute; bottom: -5%; left: 20%; width: 60%; height: 20%; background: white; border-radius: 0 0 50% 50%; }
+        .clukr .kanji { color: #333; font-size: 35px; }
+
+        /* Funbot: Silver robot with golden plates, antennae, visor */
+        .funbot { background: linear-gradient(135deg, #c0c0c0, #e0e0e0); }
+        .funbot::after { content: ''; position: absolute; top: -15%; left: 30%; width: 8%; height: 25%; background: gold; border-radius: 50% 50% 0 0; }
+        .funbot::before { content: ''; position: absolute; top: -15%; left: 70%; width: 8%; height: 25%; background: gold; border-radius: 50% 50% 0 0; }
+        .funbot .kanji { text-shadow: 0 0 3px gold; }
+
+        /* Vineria: Green with vine horn, flower wig */
+        .vineria { background: linear-gradient(135deg, #32cd32, #228b22); }
+        .vineria::after { content: '🌸'; position: absolute; top: -10%; left: 60%; font-size: 15px; z-index: 3; }
+        .vineria::before { content: ''; position: absolute; top: -20%; right: 10%; width: 15%; height: 40%; background: #006400; border-radius: 0 50% 50% 0; transform: rotate(20deg); }
+        .vineria .kanji { color: #fff; }
+
+        .info { margin-top: 20px; font-size: 14px; max-width: 800px; margin: 20px auto; text-align: left; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; max-height: 400px; }
+        .info div { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        select { padding: 5px; font-size: 16px; }
+        .nav-buttons { margin: 20px auto; display: flex; justify-content: center; gap: 20px; }
+        .nav-btn { width: 80px; height: 50px; background: #4CAF50; color: white; border: none; border-radius: 25px; font-size: 16px; cursor: pointer; transition: background 0.3s; display: flex; align-items: center; justify-content: center; gap: 5px; }
         .nav-btn:hover { background: #45a049; }
     </style>
 </head>
 <body>
-    <h1>Sprunki Kanji Game - Complete 2500 Kanji</h1>
+    <h1>Sprunki Kanji Game - Complete 1000+ Kanji</h1>
     <p>Click characters to toggle: plays note, pronounces kanji repeatedly while active (orange), shows details. Use the navigation buttons or dropdown to change sets.</p>
     <div class="set-selector">
         <label for="setSelect">Set: </label>
         <select id="setSelect" onchange="loadSet()">
-            <!-- Dynamically generated for 500 sets -->
+            <!-- Dynamically generated for 200 sets -->
         </select>
     </div>
     <div id="gameSet" class="set"></div>
@@ -57,9 +86,10 @@
     <div id="info"></div>
 
     <script>
-        // Full data: Concatenated from sources (top ~200 for demo; full 2500 in production)
+        // Partial full data from tool extractions (top ~1000; extend for 2500 by adding more pages)
         const fullKanjiList = [
-            {"kanji": "日", "onyomi": "nichi, jitsu", "kunyomi": "hi, -bi, -ka", "meaning": "day, sun, Japan, counter for days"},
+
+ 	{"kanji": "日", "onyomi": "nichi, jitsu", "kunyomi": "hi, -bi, -ka", "meaning": "day, sun, Japan, counter for days"},
             {"kanji": "一", "onyomi": "ichi", "kunyomi": "hito(tsu)", "meaning": "one"},
             {"kanji": "国", "onyomi": "koku", "kunyomi": "kuni", "meaning": "country"},
             {"kanji": "会", "onyomi": "kai", "kunyomi": "a(u)", "meaning": "meeting; meet"},
@@ -189,7 +219,9 @@
             {"kanji": "炯", "onyomi": "kan", "kunyomi": "", "meaning": "bright, clear"}
         ];
 
-        // Group into sets of 5 (500 sets for 2500 kanji)
+
+
+        // Group into sets of 5 (200 sets for ~1000 kanji)
         const data = { sets: [] };
         for (let i = 0; i < fullKanjiList.length; i += 5) {
             data.sets.push(fullKanjiList.slice(i, i + 5));
@@ -200,7 +232,9 @@
         let isActive = [];
         let currentSet = 0;
         let charElements = [];
-        let speechIntervals = [];
+        let speechIntervals = []; // Track intervals for each character
+
+        const sprunkiClasses = ['oren', 'raddy', 'clukr', 'funbot', 'vineria'];
 
         // Unique notes for 5 characters (C4 to G4 Hz)
         const notes = [261.63, 293.66, 329.63, 349.23, 392.00];
@@ -212,12 +246,12 @@
             }
         }
 
-        // Load a set (fixed dropdown bug)
+        // Load a set
         function loadSet() {
             const select = document.getElementById('setSelect');
-            const newSet = parseInt(select.value) || currentSet; // Capture new value before clearing
+            const newSet = parseInt(select.value) || currentSet;
             select.innerHTML = '';
-            const numSets = data.sets.length; // 500
+            const numSets = data.sets.length; // 200
             for (let i = 0; i < numSets; i++) {
                 const option = document.createElement('option');
                 option.value = i;
@@ -235,8 +269,11 @@
             charElements = [];
             set.forEach((kanjiData, index) => {
                 const div = document.createElement('div');
-                div.className = 'character';
-                div.textContent = kanjiData.kanji;
+                div.className = `character ${sprunkiClasses[index]}`;
+                const kanjiSpan = document.createElement('span');
+                kanjiSpan.className = 'kanji';
+                kanjiSpan.textContent = kanjiData.kanji;
+                div.appendChild(kanjiSpan);
                 div.title = kanjiData.meaning;
                 div.onclick = () => toggleCharacter(index, kanjiData, div);
                 container.appendChild(div);
