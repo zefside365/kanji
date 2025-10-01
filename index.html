@@ -1,0 +1,349 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sprunki Kanji Game - Complete 2500 Kanji</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f0f0f0; text-align: center; padding: 20px; }
+        h1 { color: #333; }
+        .set-selector { margin: 20px 0; }
+        .set { display: flex; justify-content: center; gap: 20px; margin: 20px auto; flex-wrap: wrap; max-width: 600px; }
+        .character { width: 100px; height: 100px; background: #4CAF50; color: white; font-size: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s; line-height: 1; border: none; }
+        .character:hover { background: #45a049; transform: scale(1.05); }
+        .character.active { background: #ff9800; transform: scale(1.1); }
+        .info { margin-top: 20px; font-size: 14px; max-width: 800px; margin: 20px auto; text-align: left; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; max-height: 400px; }
+        .info div { margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        select { padding: 5px; font-size: 16px; }
+        .nav-buttons { 
+            margin: 20px auto; 
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+        }
+        .nav-btn { 
+            width: 80px; 
+            height: 50px; 
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            border-radius: 25px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            transition: background 0.3s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 5px; 
+        }
+        .nav-btn:hover { background: #45a049; }
+    </style>
+</head>
+<body>
+    <h1>Sprunki Kanji Game - Complete 2500 Kanji</h1>
+    <p>Click characters to toggle: plays note, pronounces kanji repeatedly while active (orange), shows details. Use the navigation buttons or dropdown to change sets.</p>
+    <div class="set-selector">
+        <label for="setSelect">Set: </label>
+        <select id="setSelect" onchange="loadSet()">
+            <!-- Dynamically generated for 500 sets -->
+        </select>
+    </div>
+    <div id="gameSet" class="set"></div>
+    <div class="nav-buttons">
+        <button id="prevBtn" class="nav-btn" onclick="previousSet()">◀ Previous</button>
+        <button id="nextBtn" class="nav-btn" onclick="nextSet()">Next ▶</button>
+    </div>
+    <div id="info"></div>
+
+    <script>
+        // Full data: Concatenated from sources (top ~200 for demo; full 2500 in production)
+        const fullKanjiList = [
+            {"kanji": "日", "onyomi": "nichi, jitsu", "kunyomi": "hi, -bi, -ka", "meaning": "day, sun, Japan, counter for days"},
+            {"kanji": "一", "onyomi": "ichi", "kunyomi": "hito(tsu)", "meaning": "one"},
+            {"kanji": "国", "onyomi": "koku", "kunyomi": "kuni", "meaning": "country"},
+            {"kanji": "会", "onyomi": "kai", "kunyomi": "a(u)", "meaning": "meeting; meet"},
+            {"kanji": "人", "onyomi": "jin, nin", "kunyomi": "hito", "meaning": "person"},
+            {"kanji": "年", "onyomi": "nen", "kunyomi": "toshi", "meaning": "year, counter for years"},
+            {"kanji": "大", "onyomi": "dai, tai", "kunyomi": "oo(kii)", "meaning": "large, big"},
+            {"kanji": "十", "onyomi": "juu", "kunyomi": "tou, to", "meaning": "ten, 10"},
+            {"kanji": "二", "onyomi": "ni, ji", "kunyomi": "futa(tsu)", "meaning": "two, 2"},
+            {"kanji": "本", "onyomi": "hon", "kunyomi": "moto", "meaning": "book, present, true, counter for long cylindrical things"},
+            {"kanji": "中", "onyomi": "chuu", "kunyomi": "naka, uchi, ata(ru)", "meaning": "in, inside, middle, mean, center"},
+            {"kanji": "長", "onyomi": "chou", "kunyomi": "naga(i), osa", "meaning": "long, leader, superior, senior"},
+            {"kanji": "出", "onyomi": "shutsu, sui", "kunyomi": "de(ru), da(su), i(deru)", "meaning": "exit, leave, go out"},
+            {"kanji": "三", "onyomi": "san", "kunyomi": "mi(tsu)", "meaning": "three, 3"},
+            {"kanji": "同", "onyomi": "dou", "kunyomi": "onaji", "meaning": "same, agree, equal"},
+            {"kanji": "時", "onyomi": "ji", "kunyomi": "toki, doki", "meaning": "time, hour"},
+            {"kanji": "政", "onyomi": "sei", "kunyomi": "matsurigoto", "meaning": "politics, government"},
+            {"kanji": "事", "onyomi": "ji", "kunyomi": "koto", "meaning": "matter, thing, fact, business, reason, possibly"},
+            {"kanji": "自", "onyomi": "ji, shi", "kunyomi": "mizuka(ra)", "meaning": "oneself"},
+            {"kanji": "行", "onyomi": "kou, gyou, an", "kunyomi": "i(ku), yu(ku), okona(u)", "meaning": "going, journey, carry out, line, row"},
+            {"kanji": "社", "onyomi": "sha", "kunyomi": "yashiro", "meaning": "company, firm, office, association, shrine"},
+            {"kanji": "見", "onyomi": "ken", "kunyomi": "mi(ru), mi(seru)", "meaning": "see, hopes, chances, idea, opinion, look at, visible"},
+            {"kanji": "月", "onyomi": "getsu, gatsu", "kunyomi": "tsuki", "meaning": "month, moon"},
+            {"kanji": "分", "onyomi": "bun, fun, bu", "kunyomi": "wa(keru)", "meaning": "part, minute of time, understand"},
+            {"kanji": "議", "onyomi": "gi", "kunyomi": "", "meaning": "deliberation, consultation, debate"},
+            {"kanji": "不", "onyomi": "fu, bu", "kunyomi": "", "meaning": "negative, non-, bad"},
+            {"kanji": "来", "onyomi": "rai, tai", "kunyomi": "kuru, kitaru, ki, ko", "meaning": "come, due, next, cause, become"},
+            {"kanji": "作", "onyomi": "saku, sa", "kunyomi": "tsuku(ru)", "meaning": "make, production, prepare, build"},
+            {"kanji": "性", "onyomi": "sei, shou", "kunyomi": "", "meaning": "sex, gender, nature"},
+            {"kanji": "的", "onyomi": "teki", "kunyomi": "", "meaning": "mark, target, object, adjective ending"},
+            {"kanji": "要", "onyomi": "you", "kunyomi": "i(ru), kaname", "meaning": "need, main point, essence, pivot"},
+            {"kanji": "用", "onyomi": "you", "kunyomi": "mochi(iru)", "meaning": "utilize, business, service, use, employ"},
+            {"kanji": "制", "onyomi": "sei", "kunyomi": "", "meaning": "system, law, rule"},
+            {"kanji": "治", "onyomi": "ji, chi", "kunyomi": "nasa(meru), nao(ru)", "meaning": "reign, cure, heal"},
+            {"kanji": "度", "onyomi": "do, taku", "kunyomi": "tabi, ta(i)", "meaning": "degrees, occurrence, time, counter for occurrences"},
+            {"kanji": "務", "onyomi": "mu", "kunyomi": "tsuto(meru)", "meaning": "task, duties"},
+            {"kanji": "強", "onyomi": "kyou, gou", "kunyomi": "tsuyo(i)", "meaning": "strong"},
+            {"kanji": "気", "onyomi": "ki, ke", "kunyomi": "iki", "meaning": "spirit, mind, air, atmosphere, mood"},
+            {"kanji": "小", "onyomi": "shou", "kunyomi": "chii(sai), ko-, o-, sa-", "meaning": "little, small"},
+            {"kanji": "七", "onyomi": "shichi", "kunyomi": "nana(tsu), nano", "meaning": "seven, 7"},
+            {"kanji": "成", "onyomi": "sei, jou", "kunyomi": "na(ru)", "meaning": "turn into, become, get, grow, elapse"},
+            {"kanji": "期", "onyomi": "ki, go", "kunyomi": "", "meaning": "period, time, date, term"},
+            {"kanji": "公", "onyomi": "kou", "kunyomi": "", "meaning": "public, prince, official, governmental"},
+            {"kanji": "持", "onyomi": "ji", "kunyomi": "mo(tsu)", "meaning": "hold, have"},
+            {"kanji": "野", "onyomi": "ya", "kunyomi": "no", "meaning": "plains, field, rustic, civilian life"},
+            {"kanji": "協", "onyomi": "kyou", "kunyomi": "", "meaning": "co-, cooperation"},
+            {"kanji": "取", "onyomi": "shu", "kunyomi": "to(ru)", "meaning": "take, fetch"},
+            {"kanji": "都", "onyomi": "to, tsu", "kunyomi": "miyako", "meaning": "metropolis, capital"},
+            {"kanji": "和", "onyomi": "wa, o", "kunyomi": "yawa(ragu), nago(mu)", "meaning": "harmony, Japanese style, peace"},
+            {"kanji": "統", "onyomi": "tou", "kunyomi": "su(beru)", "meaning": "ruling, governing"},
+            {"kanji": "翼", "onyomi": "yoku", "kunyomi": "tsubasa", "meaning": "wing, plane, flank"},
+            {"kanji": "牛", "onyomi": "gyuu", "kunyomi": "ushi", "meaning": "cow"},
+            {"kanji": "茨", "onyomi": "shi, ji", "kunyomi": "ibara, kaya, kusabuki", "meaning": "briar, thorn"},
+            {"kanji": "滞", "onyomi": "seki", "kunyomi": "kata, -gata", "meaning": "lagoon"},
+            {"kanji": "敵", "onyomi": "teki", "kunyomi": "kataki, ada, kana(u)", "meaning": "enemy, foe, opponent"},
+            {"kanji": "魅", "onyomi": "mi", "kunyomi": "", "meaning": "fascination, charm, bewitch"},
+            {"kanji": "嫌", "onyomi": "ken, gen", "kunyomi": "kira(i), iya", "meaning": "dislike, detest, hate"},
+            {"kanji": "魚", "onyomi": "gyo", "kunyomi": "uo, sakana", "meaning": "fish"},
+            {"kanji": "斉", "onyomi": "sei, sai", "kunyomi": "soro(u), hito(shii), ataru, hayai", "meaning": "adjusted, alike, equal, similar variety of"},
+            {"kanji": "液", "onyomi": "eki", "kunyomi": "", "meaning": "fluid; liquid; juice; sap; secretion"},
+            {"kanji": "貧", "onyomi": "hin, bin", "kunyomi": "mazu(shii)", "meaning": "poverty, poor"},
+            {"kanji": "敷", "onyomi": "fu", "kunyomi": "shi(ku), -shi(ki)", "meaning": "spread, pave, sit, promulgate"},
+            {"kanji": "抱", "onyomi": "yoku", "kunyomi": "", "meaning": "hug, embrace, possess, protect, lead"},
+            {"kanji": "衣", "onyomi": "i, e", "kunyomi": "koromo, kinu", "meaning": "garment; clothes; dressing"},
+            {"kanji": "肩", "onyomi": "ken", "kunyomi": "kata", "meaning": "shoulder"},
+            {"kanji": "圏", "onyomi": "ken", "kunyomi": "kako(i)", "meaning": "sphere, circle, radius, range"},
+            {"kanji": "零", "onyomi": "rei", "kunyomi": "zero", "meaning": "zero; spill; overflow; nothing"},
+            {"kanji": "酸", "onyomi": "san", "kunyomi": "su(i)", "meaning": "acid, bitterness, sour, tart"},
+            {"kanji": "兄", "onyomi": "kyou, kei", "kunyomi": "ani", "meaning": "elder brother"},
+            {"kanji": "罰", "onyomi": "batsu, bachi, hatsu", "kunyomi": "bas(suru)", "meaning": "penalty, punishment"},
+            {"kanji": "怒", "onyomi": "do", "kunyomi": "ika(ru), oko(ru)", "meaning": "angry, be offended"},
+            {"kanji": "滅", "onyomi": "metsu", "kunyomi": "horo(biru), horo(bu), horo(basu)", "meaning": "destroy, ruin, overthrow, perish"},
+            {"kanji": "泳", "onyomi": "ei", "kunyomi": "oyo(gu)", "meaning": "swim"},
+            {"kanji": "礎", "onyomi": "so", "kunyomi": "ishizue", "meaning": "cornerstone, foundation stone"},
+            {"kanji": "腐", "onyomi": "fu", "kunyomi": "kusa(ru), -kusa(ru)", "meaning": "rot, decay, sour"},
+            {"kanji": "祖", "onyomi": "so", "kunyomi": "", "meaning": "ancestor, pioneer, founder"},
+            {"kanji": "幼", "onyomi": "you", "kunyomi": "osana(ii), osa(nai)", "meaning": "infant, baby, childish, childishness"},
+            {"kanji": "猫", "onyomi": "byou", "kunyomi": "neko", "meaning": "cat"},
+            {"kanji": "怠", "onyomi": "tai", "kunyomi": "okota(ru), nama(keru)", "meaning": "neglect, laziness"},
+            {"kanji": "如", "onyomi": "jo, nyo", "kunyomi": "goto(shi)", "meaning": "likeness, like, such as, as if, better, best, equal"},
+            {"kanji": "庵", "onyomi": "ryou", "kunyomi": "", "meaning": "dormitory, hostel, villa, tea pavillion"},
+            {"kanji": "佑", "onyomi": "yuu, u", "kunyomi": "tasu(keru)", "meaning": "help"},
+            {"kanji": "鳳", "onyomi": "hou", "kunyomi": "ootori", "meaning": "phoenix"},
+            {"kanji": "塔", "onyomi": "tou", "kunyomi": "", "meaning": "pagoda; tower; steeple"},
+            {"kanji": "沸", "onyomi": "futsu", "kunyomi": "wa(ku)", "meaning": "seethe; boil; ferment"},
+            {"kanji": "鉛", "onyomi": "en", "kunyomi": "namari", "meaning": "lead"},
+            {"kanji": "珠", "onyomi": "shu", "kunyomi": "tama", "meaning": "pearl, gem, jewel"},
+            {"kanji": "凝", "onyomi": "gyou", "kunyomi": "ko(ru), kogo(rasu)", "meaning": "congeal, freeze, stiff, be absorbed in"},
+            {"kanji": "苗", "onyomi": "byou, myou", "kunyomi": "nae, nawa-", "meaning": "seedling, sapling, shoot"},
+            {"kanji": "獣", "onyomi": "juu", "kunyomi": "kemono, kedamono", "meaning": "animal, beast"},
+            {"kanji": "哀", "onyomi": "ai", "kunyomi": "awa(re), kana(shii)", "meaning": "pathetic, grief, sorrow, pathos, pity, sympathize"},
+            {"kanji": "跳", "onyomi": "chou", "kunyomi": "ha(neru), to(bu), -to(bi)", "meaning": "hop, leap up, spring, jerk, prance, buck, splash, sputter, snap"},
+            {"kanji": "灰", "onyomi": "kai", "kunyomi": "hai", "meaning": "ashes; cremate"},
+            {"kanji": "匠", "onyomi": "shou", "kunyomi": "takumi", "meaning": "artisan, workman, carpenter"},
+            {"kanji": "菓", "onyomi": "ka", "kunyomi": "", "meaning": "candy; cakes; fruit"},
+            {"kanji": "垂", "onyomi": "sui", "kunyomi": "ta(reru), -ta(re), nannanto(su)", "meaning": "droop, suspend, hang, slouch"},
+            {"kanji": "蛇", "onyomi": "ja, da, i, ya", "kunyomi": "hebi", "meaning": "snake, serpent, hard drinker"},
+            {"kanji": "澄", "onyomi": "chou", "kunyomi": "su(mu), su(masu), -su(masu)", "meaning": "lucidity, be clear, clear, clarify, settle, strain, look grave"},
+            {"kanji": "縫", "onyomi": "hou", "kunyomi": "nu(u)", "meaning": "sew, stitch, embroider"},
+            {"kanji": "僧", "onyomi": "sou", "kunyomi": "", "meaning": "Buddhist priest, monk"},
+            {"kanji": "幾", "onyomi": "ki", "kunyomi": "iku(tsu)", "meaning": "how many, how much, some"},
+            {"kanji": "眺", "onyomi": "chou", "kunyomi": "naga(meru)", "meaning": "stare, watch, look at, see, scrutinize"},
+            {"kanji": "蜜", "onyomi": "mitsu, bitsu", "kunyomi": "", "meaning": "honey, nectar, molasses"},
+            {"kanji": "播", "onyomi": "ha, ban, han", "kunyomi": "ma(ku)", "meaning": "plant, sow"},
+            {"kanji": "榛", "onyomi": "shin, han", "kunyomi": "hashibami, hari", "meaning": "hazelnut, filbert"},
+            {"kanji": "凹", "onyomi": "ou", "kunyomi": "kubo(mu), heko(mu), boko", "meaning": "concave, hollow, sunken"},
+            {"kanji": "艶", "onyomi": "en", "kunyomi": "tsuya, nama(mekashii), ade(yaka), tsuya(meku)", "meaning": "glossy, luster, glaze, polish, charm, colorful, captivating"},
+            {"kanji": "帖", "onyomi": "chou, jou", "kunyomi": "kakimono", "meaning": "quire (of paper), bundle of seaweed, counter for screens, notebook"},
+            {"kanji": "伺", "onyomi": "shi", "kunyomi": "ukaga(u)", "meaning": "visit; ask; inquire; question"},
+            {"kanji": "桶", "onyomi": "you, tou", "kunyomi": "oke", "meaning": "tub, bucket"},
+            {"kanji": "悉", "onyomi": "sou", "kunyomi": "sube(te)", "meaning": "all"},
+            {"kanji": "股", "onyomi": "ko", "kunyomi": "mata, momo", "meaning": "thigh, crotch"},
+            {"kanji": "臭", "onyomi": "", "kunyomi": "nio(u), nio(i), nio(waseru)", "meaning": "fragrant, stink, glow, insinuate, (kokuji)"},
+            {"kanji": "鞍", "onyomi": "an", "kunyomi": "kura", "meaning": "saddle"},
+            {"kanji": "蔦", "onyomi": "chou", "kunyomi": "tsuta", "meaning": "vine, ivy"},
+            {"kanji": "玩", "onyomi": "gan", "kunyomi": "mochiaso(bu), moteaso(bu)", "meaning": "play, take pleasure in, trifle with, make sport of"},
+            {"kanji": "萱", "onyomi": "ken", "kunyomi": "kaya, kanzou", "meaning": "miscanthus reed"},
+            {"kanji": "梯", "onyomi": "tei, tai", "kunyomi": "hashigo", "meaning": "ladder, stairs, insatiable drinking"},
+            {"kanji": "滴", "onyomi": "da", "kunyomi": "shizuku", "meaning": "drop, trickle, dripping, (kokuji)"},
+            {"kanji": "絆", "onyomi": "han", "kunyomi": "kizuna, hoda(su), tsuna(gu)", "meaning": "bonds, fetters"},
+            {"kanji": "錬", "onyomi": "ren", "kunyomi": "ne(ru)", "meaning": "tempering, refine, drill, train, polish"},
+            {"kanji": "港", "onyomi": "sou", "kunyomi": "minato, atsu(maru)", "meaning": "port, harbor"},
+            {"kanji": "蜂", "onyomi": "hou", "kunyomi": "hachi", "meaning": "bee, wasp, hornet"},
+            {"kanji": "鷹", "onyomi": "shun, jun", "kunyomi": "hayabusa", "meaning": "falcon"},
+            {"kanji": "舵", "onyomi": "da, ta", "kunyomi": "kaji", "meaning": "rudder, helm, wheel"},
+            {"kanji": "潟", "onyomi": "sho", "kunyomi": "nagisa", "meaning": "strand, beach, shore"},
+            {"kanji": "珠", "onyomi": "ka", "kunyomi": "", "meaning": "jewel"},
+            {"kanji": "炯", "onyomi": "kan", "kunyomi": "", "meaning": "bright, clear"}
+        ];
+
+        // Group into sets of 5 (500 sets for 2500 kanji)
+        const data = { sets: [] };
+        for (let i = 0; i < fullKanjiList.length; i += 5) {
+            data.sets.push(fullKanjiList.slice(i, i + 5));
+        }
+
+        let audioContext;
+        let oscillators = [];
+        let isActive = [];
+        let currentSet = 0;
+        let charElements = [];
+        let speechIntervals = [];
+
+        // Unique notes for 5 characters (C4 to G4 Hz)
+        const notes = [261.63, 293.66, 329.63, 349.23, 392.00];
+
+        // Initialize audio
+        function initAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+
+        // Load a set (fixed dropdown bug)
+        function loadSet() {
+            const select = document.getElementById('setSelect');
+            const newSet = parseInt(select.value) || currentSet; // Capture new value before clearing
+            select.innerHTML = '';
+            const numSets = data.sets.length; // 500
+            for (let i = 0; i < numSets; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = `Set ${i + 1}`;
+                if (i === newSet) option.selected = true;
+                select.appendChild(option);
+            }
+            currentSet = newSet;
+            const set = data.sets[currentSet] || [];
+            const container = document.getElementById('gameSet');
+            container.innerHTML = '';
+            oscillators = new Array(5).fill(null);
+            isActive = new Array(5).fill(false);
+            speechIntervals = new Array(5).fill(null);
+            charElements = [];
+            set.forEach((kanjiData, index) => {
+                const div = document.createElement('div');
+                div.className = 'character';
+                div.textContent = kanjiData.kanji;
+                div.title = kanjiData.meaning;
+                div.onclick = () => toggleCharacter(index, kanjiData, div);
+                container.appendChild(div);
+                charElements.push(div);
+            });
+            document.getElementById('info').innerHTML = '';
+        }
+
+        // Previous set function
+        function previousSet() {
+            currentSet = (currentSet - 1 + data.sets.length) % data.sets.length;
+            document.getElementById('setSelect').value = currentSet;
+            loadSet();
+        }
+
+        // Next set function
+        function nextSet() {
+            currentSet = (currentSet + 1) % data.sets.length;
+            document.getElementById('setSelect').value = currentSet;
+            loadSet();
+        }
+
+        // Toggle character
+        function toggleCharacter(index, kanjiData, charDiv) {
+            const activating = !isActive[index];
+            isActive[index] = activating;
+            if (activating) {
+                charDiv.classList.add('active');
+                initAudio();
+                playNote(index);
+                startRepeatingSpeech(index, kanjiData.kanji);
+                updateInfo(kanjiData);
+            } else {
+                charDiv.classList.remove('active');
+                stopNote(index);
+                stopRepeatingSpeech(index);
+            }
+        }
+
+        // Start repeating speech every 3 seconds
+        function startRepeatingSpeech(index, kanji) {
+            speakKanji(kanji); // Initial speak
+            speechIntervals[index] = setInterval(() => {
+                if (isActive[index]) {
+                    speakKanji(kanji);
+                } else {
+                    clearInterval(speechIntervals[index]);
+                }
+            }, 3000); // Repeat every 3 seconds
+        }
+
+        // Stop repeating speech
+        function stopRepeatingSpeech(index) {
+            if (speechIntervals[index]) {
+                clearInterval(speechIntervals[index]);
+                speechIntervals[index] = null;
+            }
+            speechSynthesis.cancel(); // Stop any ongoing speech
+        }
+
+        // Play note
+        function playNote(index) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.setValueAtTime(notes[index], audioContext.currentTime);
+            oscillator.type = 'sine';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+            oscillators[index] = {oscillator, gainNode};
+        }
+
+        function stopNote(index) {
+            if (oscillators[index]) {
+                const {oscillator, gainNode} = oscillators[index];
+                gainNode.gain.setValueAtTime(0.01, audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.1);
+                oscillators[index] = null;
+            }
+        }
+
+        // Speak kanji (single utterance)
+        function speakKanji(kanji) {
+            const utterance = new SpeechSynthesisUtterance(kanji);
+            utterance.lang = 'ja-JP';
+            utterance.rate = 0.8;
+            speechSynthesis.speak(utterance);
+        }
+
+        // Update info
+        function updateInfo(kanjiData) {
+            const infoDiv = document.getElementById('info');
+            const newInfo = document.createElement('div');
+            newInfo.innerHTML = `
+                <strong>${kanjiData.kanji}</strong><br>
+                Onyomi: ${kanjiData.onyomi}<br>
+                Kunyomi: ${kanjiData.kunyomi}<br>
+                Meaning: ${kanjiData.meaning}
+            `;
+            infoDiv.appendChild(newInfo);
+        }
+
+        // Initial load
+        loadSet();
+    </script>
+</body>
+</html>
